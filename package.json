@@ -1,0 +1,37 @@
+{
+  "name": "js-commander",
+  "version": "1.0.0",
+  "description": "JavaScript Commander",
+  "main": "index.js",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "c3": "^0.6.12",
+    "concurrently": "^4.1.0",
+    "d3": "^5.7.0",
+    "express": "^4.16.4",
+    "express-http-proxy": "^1.5.1",
+    "express-session": "^1.15.6",
+    "jquery": "^3.3.1",
+    "nedb": "^1.8.0",
+    "nedb-session-store": "^1.1.2",
+    "nodemon": "^1.18.9",
+    "webpack": "^4.29.0",
+    "webpack-cli": "^3.2.1",
+    "webpack-dev-server": "^3.1.14"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "concurrently 'nodemon src/serve.js' 'webpack-dev-server --hot'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emnh/js-commander.git"
+  },
+  "author": "Eivind Magnus Hvidevold",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/emnh/js-commander/issues"
+  },
+  "homepage": "https://github.com/emnh/js-commander#readme"
+}
