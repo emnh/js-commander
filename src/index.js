@@ -1,14 +1,20 @@
-import cm_css from '../css/codemirror.css';
+import '../css/codemirror.css';
+import 'codemirror/addon/lint/lint.css';
 
-import 'jquery.fancytree/dist/skin-lion/ui.fancytree.css'
+import 'jquery.fancytree/dist/skin-lion/ui.fancytree.css';
 
 const $ = require('jquery');
 const d3 = require('d3');
 const c3 = require('c3');
 
+const jshint = require('jshint');
+window.JSHINT = jshint.JSHINT;
+
 const cm = require('codemirror');
 require('codemirror/mode/javascript/javascript');
 require('codemirror/mode/mllike/mllike');
+require('codemirror/addon/lint/lint');
+require('codemirror/addon/lint/javascript-lint');
 
 const fancytree = require('jquery.fancytree');
 require('jquery.fancytree/dist/modules/jquery.fancytree.edit');
@@ -101,8 +107,57 @@ function run() {
   console.log("run");
 }
 
+/*
+function jslint() {
+  const widgets = [];
+  const editor = state.cm;
+  editor.operation(function() {
+    console.log("op");
+    for (var i = 0; i < widgets.length; ++i) {
+      editor.removeLineWidget(widgets[i]);
+    }
+    widgets.length = 0;
+
+    const code = editor.getDoc().getValue();
+    const errors = function() {
+      try {
+        const syntax = esprima.parse(code, { tolerant: true, loc: true });
+        const errors = syntax.errors;
+        return errors;
+      } catch (e) {
+        return [e];
+      }
+    }();
+
+    console.log("parsed", errors);
+
+    for (var i = 0; i < errors.length; ++i) {
+      var err = errors[i];
+      if (!err) continue;
+      console.log("err", err);
+      var msg = document.createElement("div");
+      var icon = msg.appendChild(document.createElement("span"));
+      icon.innerHTML = "!!";
+      icon.className = "lint-error-icon";
+      msg.appendChild(document.createTextNode(err.description));
+      msg.className = "lint-error";
+      widgets.push(editor.addLineWidget(err.lineNumber - 1, msg, {coverGutter: false, noHScroll: true}));
+    }
+  });
+}
+*/
+
 function save() {
-  console.log("save");
+  const code = state.cm.getDoc().getValue();
+
+  try {
+    const parsed = esprima.parse(code);
+    console.log(parsed);
+
+    console.log("save");
+  } catch (e) {
+    alert("JavaScript parsing failed!");
+  }
 }
 
 function open() {
@@ -137,7 +192,9 @@ function main() {
   `);
 
   $('#funtree').fancytree({
-   'source':
+    checkbox: true,
+    selectMode: 3,
+    source:
     [
        {
          title: "sum",
@@ -160,7 +217,9 @@ function main() {
   const ta = $("#code")[0];
   state.cm = cm.fromTextArea(ta, {
     lineNumbers: true,
-    mode: 'javascript'
+    mode: 'javascript',
+    gutters: ["CodeMirror-lint-markers"],
+    lint: true
   });
 
   const hotKeys = {
@@ -170,6 +229,7 @@ function main() {
   };
 
   var opts = {};
+
   for (var key in hotKeys) {
     const f = hotKeys[key];
     opts[key] = function(f) {
@@ -191,11 +251,6 @@ function main() {
 }`;
   state.cm.getDoc().setValue(code);
 
-  const parsed = esprima.parse(code);
-
-
-
-  console.log(parsed);
 
   $.get("/username", function(data) {
     $("#username").html(data);
