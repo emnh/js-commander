@@ -76,6 +76,8 @@ db.loadDatabase(function (err) {
     response.redirect('/index');
   });
 
+  //app.use(express.static('public'));
+
   app.get('/commands', (request, response) => {
     db.find({ doc: 'cmd' }).sort({ timestamp: 1 }).exec(function (err, docs) {
       response.send(JSON.stringify(docs));
@@ -117,9 +119,8 @@ db.loadDatabase(function (err) {
     const doc = {
       doc: 'cmd',
       user: request.session.user,
-      msg: value,
-      timestamp: new Date().getTime(),
-      choices: {}
+      cmd: value,
+      timestamp: new Date().getTime()
     };
 
     db.insert(doc, function(err, newDoc) {
@@ -130,7 +131,7 @@ db.loadDatabase(function (err) {
 
   app.use('/', proxy('localhost:8082'));
 
-  app.listen(port, (err) => {
+  app.listen(port, 'localhost', (err) => {
     if (err) {
       return console.log('something bad happened', err);
     }
