@@ -16,7 +16,19 @@ require('jquery.fancytree/dist/modules/jquery.fancytree.filter');
 
 const esprima = require('esprima');
 
+import hotkeys from 'hotkeys-js';
+
 const state = {};
+
+function rebind(key, f, opts) {
+  hotkeys.unbind(key);
+  if (opts !== undefined) {
+    hotkeys(key, f);
+  } else {
+    hotkeys(key, opts, f);
+  }
+}
+
 
 function handleCmd(cmd) {
   const tokens = cmd.split(' ');
@@ -55,7 +67,6 @@ function getCmds() {
       const date = new Date(ts);
       const user = dp[i].user;
       const cmd = dp[i].cmd;
-      const choices = dp[i].tags;
       //$("#commands").append("<li " + listStyle + ">" + dp[i].cmd + "</li>")
     }
 
@@ -86,6 +97,18 @@ function getCmds() {
   });
 }
 
+function run() {
+  console.log("run");
+}
+
+function save() {
+  console.log("save");
+}
+
+function open() {
+  console.log("open");
+}
+
 function main() {
   $("body").append(`
       <h1>Introduction</h1>
@@ -104,7 +127,12 @@ function main() {
           </div>
           <ul id="commands"></ul>
         </div>
-        <textarea id="code" readonly="true" rows="40" cols="80" style="float: left;"></textarea>
+        <div style="float: left;">
+          <textarea id="code" readonly="true" rows="40" cols="80"></textarea>
+          <input type="button" value="Open (Ctrl+O)"></input>
+          <input type="button" value="Run (Ctrl+R)"></input>
+          <input type="button" value="Commit (Ctrl+S)"></input>
+        </div>
       </div>
   `);
 
@@ -112,7 +140,8 @@ function main() {
    'source':
     [
        {
-         title: "sum"
+         title: "sum",
+         folder: true
          /*
          children: [
            { title: "child1" },
@@ -121,7 +150,8 @@ function main() {
          */
        },
       {
-        title: "main"
+        title: "main",
+        folder: true
       }
     ]
   });
@@ -132,6 +162,29 @@ function main() {
     lineNumbers: true,
     mode: 'javascript'
   });
+
+  const hotKeys = {
+    'Ctrl-R': run,
+    'Ctrl-S': save,
+    'Ctrl-O': open
+  };
+
+  var opts = {};
+  for (var key in hotKeys) {
+    const f = hotKeys[key];
+    opts[key] = function(f) {
+      return function(cm) { f(); };
+    }(f);
+    const hkey = key.replace('-', '+').replace('Ctrl', 'ctrl');
+    rebind(hkey, function(f) {
+      return function(evt, handler) {
+        evt.preventDefault();
+        f();
+      };
+    }(f));
+  }
+
+  state.cm.setOption("extraKeys", opts);
 
   const code = `function sum(a, b) {
   return a + b;

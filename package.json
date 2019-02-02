@@ -15,6 +15,7 @@
     "express": "^4.16.4",
     "express-http-proxy": "^1.5.1",
     "express-session": "^1.15.6",
+    "hotkeys-js": "^3.4.3",
     "jquery": "^3.3.1",
     "jquery.fancytree": "^2.30.2",
     "nedb": "^1.8.0",
