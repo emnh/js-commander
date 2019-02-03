@@ -61,6 +61,19 @@ function handleCmd(cmd) {
   }
 }
 
+function getApp() {
+  $.get("/app", function(data) {
+    const dp = JSON.parse(data);
+    if (
+      dp !== undefined &&
+      dp[0] !== undefined &&
+      dp[0].app !== undefined) {
+      const code = dp[0].app;
+      state.cm.getDoc().setValue(code);
+    }
+  });
+}
+
 function getCmds() {
   $.get("/commands", function(data) {
 
@@ -94,7 +107,6 @@ function getCmds() {
         $.post("./postcmd", {
           value: $("#cmdinput").val()
         }, function(data) {
-          getCmds();
           $("#cmdinput").val("");
         });
         */
@@ -245,7 +257,7 @@ function main() {
           <textarea id="codeOut" readonly="true"></textarea>
         </div>
       </div>
-      <iframe id="output">
+      <iframe id="output" src="http://localhost:8081/index">
       </iframe>
   `);
 
@@ -334,7 +346,8 @@ function main() {
     $("#username").html(data);
   });
 
-  getCmds();
+  // getCmds();
+  getApp();
 
   const doResize = function() {
     const m = $("#mainContent");
