@@ -83,6 +83,16 @@ db.loadDatabase(function (err) {
       response.send(JSON.stringify(docs));
     });
   });
+  
+  app.get('/app', (request, response) => {
+    db.find({
+      doc: 'app',
+      user: request.session.user
+    }).sort({ timestamp: 1 })
+      .exec(function (err, docs) {
+        response.send(JSON.stringify(docs));
+      });
+  });
 
   app.get('/username', (request, response) => {
     response.send(request.session.user);
@@ -123,12 +133,24 @@ db.loadDatabase(function (err) {
       timestamp: new Date().getTime()
     };
 
+    const dname = path.join('sub', 'tmp');
+    if (!fs.existsSync(dname)) {
+      fs.mkdirSync(dname);
+    }
+
+    const fname = path.join(dname, 'index.js');
+    fs.writeFileSync(fname, value);
+
     db.update(
       {
         doc: 'app',
         user: request.session.user
       },
       doc,
+      {
+        upsert: true,
+        returnUpdatedDocs: true
+      },
       function(err, numReplaced, newDoc) {
         console.log(newDoc);
         response.send(JSON.stringify(newDoc));
