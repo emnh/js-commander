@@ -24,6 +24,8 @@ const esprima = require('esprima');
 
 import hotkeys from 'hotkeys-js';
 
+import { throttle, debounce } from 'throttle-debounce';
+
 const state = {};
 
 function rebind(key, f, opts) {
@@ -113,12 +115,22 @@ function run() {
   }
 }
 
+function compile() {
+  const code = state.cm.getDoc().getValue();
+  state.cmOut.getDoc().setValue(code);
+}
+
 function save() {
   const code = state.cm.getDoc().getValue();
 
   try {
     const parsed = esprima.parse(code);
     console.log(parsed);
+
+    $.post("./postapp", {
+      value: code
+    }, function(data) {
+    });
 
     console.log("save");
   } catch (e) {
@@ -166,6 +178,18 @@ function main() {
     .hidden {
       display: none;
     }
+
+    body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #output {
+      position: absolute;
+      right: 0px;
+      bottom: 0px;
+    }
   </style>
 `);
 
@@ -196,7 +220,7 @@ function main() {
       </div>
       <h2>User Profile</h2>
       <p>User name: <span id="username"></span></p>
-      <div>
+      <div id="mainContent" style="display: inline-block; border: 1px solid black;">
         <div style="float: left; padding-right: 4em; ">
           <h2>Functions</h2>
           <div id="funtree">
@@ -221,6 +245,8 @@ function main() {
           <textarea id="codeOut" readonly="true"></textarea>
         </div>
       </div>
+      <iframe id="output">
+      </iframe>
   `);
 
   $("#toggleIntro").click(function() {
@@ -292,6 +318,9 @@ function main() {
 
   state.cm.setOption("extraKeys", opts);
 
+  state.cm.on('change', compile);
+
+  // CODE HERE
   const code = `function sum(a, b) {
   return a + b;
 }
@@ -307,13 +336,22 @@ function main() {
 
   getCmds();
 
-  /*
-  $("#inputbox")
-    .css("position", "absolute")
-    .css("top", $("#commands").bottom())
-    .css("left", $("#commands").left());
-    */
-
+  const doResize = function() {
+    const m = $("#mainContent");
+    //const ch = m.offset().top + m.height() + 15;
+    const ch = m.offset().top + 5;
+    const cw = m.offset().left + m.width() + 5;
+    const h = window.innerHeight - ch;
+    const w = window.innerWidth - cw;
+    //const w = $("body").width() - cw;
+    $("#output").height(h);
+    $("#output").width(w);
+    //console.log("resize");
+  };
+  doResize();
+  $(window).resize(doResize);
+  $("#mainContent").on("DOMSubtreeModified", throttle(1000, doResize));
+  setTimeout(doResize, 0);
 };
 
 $(main);

@@ -107,6 +107,35 @@ db.loadDatabase(function (err) {
   });
   */
 
+  app.post('/postapp', (request, response) => {
+    const body = request.body;
+    const value = body.value;
+
+    if (value === undefined || value === '') {
+      response.send("Error: empty message");
+      return;
+    }
+
+    const doc = {
+      doc: 'app',
+      user: request.session.user,
+      app: value,
+      timestamp: new Date().getTime()
+    };
+
+    db.update(
+      {
+        doc: 'app',
+        user: request.session.user
+      },
+      doc,
+      function(err, numReplaced, newDoc) {
+        console.log(newDoc);
+        response.send(JSON.stringify(newDoc));
+      }
+    );
+  });
+
   app.post('/postcmd', (request, response) => {
     const body = request.body;
     const value = body.value;
