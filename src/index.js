@@ -105,6 +105,12 @@ function getCmds() {
 
 function run() {
   console.log("run");
+  try {
+    const code = state.cm.getDoc().getValue() + "\nmain()";
+    eval(code);
+  } catch(e) {
+    console.log(e);
+  }
 }
 
 function save() {
@@ -125,13 +131,74 @@ function open() {
 }
 
 function main() {
+  $("head").append(`
+  <style>
+    i {
+      border: solid black;
+      border-width: 0 4px 4px 0;
+      display: inline-block;
+      padding: 4px;
+      position: relative;
+      top: -4px;
+      margin-right: 6px;
+    }
+
+    .right {
+      transform: rotate(-45deg);
+      -webkit-transform: rotate(-45deg);
+    }
+
+    .left {
+      transform: rotate(135deg);
+      -webkit-transform: rotate(135deg);
+    }
+
+    .up {
+      transform: rotate(-135deg);
+      -webkit-transform: rotate(-135deg);
+    }
+
+    .down {
+      transform: rotate(45deg);
+      -webkit-transform: rotate(45deg);
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+`);
+
   $("body").append(`
-      <h1>Introduction</h1>
-      <p>This is a programming environment where you issue commands to create blocks of code.</p>
-      <p>User: <span id="username"></span></p>
+      <a href="#"><h1 id="toggleIntro"><i class="arrown right"></i>Introduction</h1></a>
+      <div class="hidden" id="divIntro" style="width: 40em;">
+        This is an append-only programming environment where
+        you issue patches / commands to create new versions of code.
+        Presentation of the evolution of a program is linear and
+        is useful for creating tutorials.
+        All history is considered useful and bug fixes and updates due to
+        dependencies should thus be applied to all historical versions.
+        There are a few cases for virtual alterations to be treated differently:
+        <ul>
+          <li>Update to new version of dependency: Layer patch to all matching function versions</li>
+          <li>Bug fix: Layer patch to all matching function versions</li>
+          <li>Feature alteration: Named branch</li>
+          <li>Forward evolution: New function version</li>
+        </ul>
+        Redundancy alteration can be treated in various ways. It is designed to apply bug fixes to all versions of program history:
+        <ul>
+          <li>Structural patch applied to all matching redundancies. Easy forward evolution, but harder patch making.</li>
+          <li>
+            Avoiding redundancies through structured historical alterations.
+            Requires structural patch making on forward evolution, but enables easier bug fixing.
+          </li>
+        </ul>
+      </div>
+      <h2>User Profile</h2>
+      <p>User name: <span id="username"></span></p>
       <div>
-        <h3>Functions</h3>
         <div style="float: left; padding-right: 4em; ">
+          <h2>Functions</h2>
           <div id="funtree">
             <!--
             <ul>
@@ -143,13 +210,24 @@ function main() {
           <ul id="commands"></ul>
         </div>
         <div style="float: left;">
-          <textarea id="code" readonly="true" rows="40" cols="80"></textarea>
+          <h2>Program Constructor</h2>
+          <textarea id="code" readonly="true"></textarea>
           <input type="button" value="Open (Ctrl+O)"></input>
           <input type="button" value="Run (Ctrl+R)"></input>
           <input type="button" value="Commit (Ctrl+S)"></input>
         </div>
+        <div style="float: left;">
+          <h2>Program Result</h2>
+          <textarea id="codeOut" readonly="true"></textarea>
+        </div>
       </div>
   `);
+
+  $("#toggleIntro").click(function() {
+    $("#toggleIntro > i").toggleClass("down");
+    $("#toggleIntro > i").toggleClass("right");
+    $("#divIntro").toggleClass("hidden");
+  });
 
   $('#funtree').fancytree({
     checkbox: true,
@@ -182,6 +260,14 @@ function main() {
     lint: true
   });
 
+  const ta2 = $("#codeOut")[0];
+  state.cmOut = cm.fromTextArea(ta2, {
+    lineNumbers: true,
+    mode: 'javascript',
+    gutters: ["CodeMirror-lint-markers"],
+    lint: true
+  });
+
   const hotKeys = {
     'Ctrl-R': run,
     'Ctrl-S': save,
@@ -208,9 +294,12 @@ function main() {
 
   const code = `function sum(a, b) {
   return a + b;
+}
+
+function main() {
+  console.log(sum(1, 2));
 }`;
   state.cm.getDoc().setValue(code);
-
 
   $.get("/username", function(data) {
     $("#username").html(data);
