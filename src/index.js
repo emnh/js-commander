@@ -37,30 +37,6 @@ function rebind(key, f, opts) {
   }
 }
 
-
-function handleCmd(cmd) {
-  const tokens = cmd.split(' ');
-  switch (tokens[0]) {
-    case 'md':
-    case 'mkdir':
-      {
-        const folder = tokens[1];
-        const tree = state.funtree.fancytree("getTree");
-        const active = tree.getActiveNode();
-        const par = active != null ? active : tree.rootNode;
-        console.log("par", par);
-        par.addChildren({ title: folder });
-        break;
-      }
-    case 'rd':
-    case 'rmdir':
-      {
-        const folder = tokens[1];
-        break;
-      }
-  }
-}
-
 function getApp() {
   $.get("/app", function(data) {
     const dp = JSON.parse(data);
@@ -72,64 +48,6 @@ function getApp() {
       state.cm.getDoc().setValue(code);
     }
   });
-}
-
-function getCmds() {
-  $.get("/commands", function(data) {
-
-    // List command history
-    const dp = JSON.parse(data);
-    console.log(dp);
-    $("#commands").empty();
-    const listStyle = "style='padding-bottom: 2em;'";
-    for (let i = 0; i < dp.length; i++) {
-      const id = dp[i]._id;
-      const ts = dp[i].timestamp;
-      const date = new Date(ts);
-      const user = dp[i].user;
-      const cmd = dp[i].cmd;
-      //$("#commands").append("<li " + listStyle + ">" + dp[i].cmd + "</li>")
-    }
-
-    // Add input box
-    $("#commands").append(`
-      <div id="inputbox">
-        <b>Input: </b><input id="cmdinput"type="text"></input>
-      </div>
-      `);
-
-    // Handle input
-    $("#cmdinput").on('keypress', function(e) {
-      if (e.which == 13) {
-        handleCmd($("#cmdinput").val());
-        $("#cmdinput").val("");
-        /*
-        $.post("./postcmd", {
-          value: $("#cmdinput").val()
-        }, function(data) {
-          $("#cmdinput").val("");
-        });
-        */
-      }
-    });
-
-    $("#cmdinput").focus();
-  });
-}
-
-function run() {
-  console.log("run");
-  try {
-    const code = state.cm.getDoc().getValue() + "\nmain()";
-    eval(code);
-  } catch(e) {
-    console.log(e);
-  }
-}
-
-function compile() {
-  const code = state.cm.getDoc().getValue();
-  state.cmOut.getDoc().setValue(code);
 }
 
 function save() {
@@ -208,9 +126,9 @@ function main() {
   $("body").append(`
       <a href="#"><h1 id="toggleIntro"><i class="arrown right"></i>Introduction</h1></a>
       <div class="hidden" id="divIntro" style="width: 40em;">
-        This is an append-only programming environment where
-        you issue patches / commands to create new versions of code.
-        Presentation of the evolution of a program is linear and
+        This is a differential programming environment where
+        you create new versions of code using the immer library.
+        Presentation of the evolution of a program is linear (or tree-shaped) and
         is useful for creating tutorials.
         All history is considered useful and bug fixes and updates due to
         dependencies should thus be applied to all historical versions.
@@ -227,34 +145,17 @@ function main() {
           <li>
             Avoiding redundancies through structured historical alterations.
             Requires structural patch making on forward evolution, but enables easier bug fixing.
+            This is the approach taken.
           </li>
         </ul>
       </div>
       <h2>User Profile</h2>
       <p>User name: <span id="username"></span></p>
       <div id="mainContent" style="display: inline-block; border: 1px solid black;">
-        <div style="float: left; padding-right: 4em; ">
-          <h2>Functions</h2>
-          <div id="funtree">
-            <!--
-            <ul>
-              <li>root1</li>
-              <li>root2</li>
-            </ul>
-            -->
-          </div>
-          <ul id="commands"></ul>
-        </div>
         <div style="float: left;">
-          <h2>Program Constructor</h2>
+          <h2>sub/src/index.js</h2>
           <textarea id="code" readonly="true"></textarea>
-          <input type="button" value="Open (Ctrl+O)"></input>
-          <input type="button" value="Run (Ctrl+R)"></input>
-          <input type="button" value="Commit (Ctrl+S)"></input>
-        </div>
-        <div style="float: left;">
-          <h2>Program Result</h2>
-          <textarea id="codeOut" readonly="true"></textarea>
+          <input type="button" value="Save and run (Ctrl+S)"></input>
         </div>
       </div>
       <iframe id="output" src="http://localhost:8081/index">
@@ -267,29 +168,6 @@ function main() {
     $("#divIntro").toggleClass("hidden");
   });
 
-  $('#funtree').fancytree({
-    checkbox: true,
-    selectMode: 3,
-    source:
-    [
-       {
-         title: "sum",
-         folder: true
-         /*
-         children: [
-           { title: "child1" },
-           { title: "child2" }
-         ]
-         */
-       },
-      {
-        title: "main",
-        folder: true
-      }
-    ]
-  });
-  state.funtree = $("#funtree");
-
   const ta = $("#code")[0];
   state.cm = cm.fromTextArea(ta, {
     lineNumbers: true,
@@ -298,18 +176,8 @@ function main() {
     lint: true
   });
 
-  const ta2 = $("#codeOut")[0];
-  state.cmOut = cm.fromTextArea(ta2, {
-    lineNumbers: true,
-    mode: 'javascript',
-    gutters: ["CodeMirror-lint-markers"],
-    lint: true
-  });
-
   const hotKeys = {
-    'Ctrl-R': run,
-    'Ctrl-S': save,
-    'Ctrl-O': open
+    'Ctrl-S': save
   };
 
   var opts = {};
@@ -330,8 +198,6 @@ function main() {
 
   state.cm.setOption("extraKeys", opts);
 
-  state.cm.on('change', compile);
-
   // CODE HERE
   const code = `function sum(a, b) {
   return a + b;
@@ -346,7 +212,6 @@ function main() {
     $("#username").html(data);
   });
 
-  // getCmds();
   getApp();
 
   const doResize = function() {
