@@ -133,7 +133,7 @@ db.loadDatabase(function (err) {
       timestamp: new Date().getTime()
     };
 
-    const dname = path.join('sub', 'tmp');
+    const dname = path.join('sub', 'src');
     if (!fs.existsSync(dname)) {
       fs.mkdirSync(dname);
     }
