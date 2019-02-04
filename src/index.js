@@ -351,14 +351,22 @@ function main() {
 
   const doResize = function() {
     const m = $("#mainContent");
-    //const ch = m.offset().top + m.height() + 15;
-    const ch = m.offset().top + 5;
-    const cw = m.offset().left + m.width() + 5;
-    const h = window.innerHeight - ch;
-    const w = window.innerWidth - cw;
-    //const w = $("body").width() - cw;
-    $("#output").height(h);
-    $("#output").width(w);
+    const dockLeft = false;
+    if (dockLeft) {
+      const ch = m.offset().top + 5;
+      const cw = m.offset().left + m.width() + 5;
+      const h = window.innerHeight - ch;
+      const w = window.innerWidth - cw;
+      $("#output").height(h);
+      $("#output").width(w);
+    } else {
+      const ch = m.offset().top + m.height() + 5;
+      const cw = m.offset().left + 5;
+      const h = window.innerHeight - ch;
+      const w = window.innerWidth - cw;
+      $("#output").height(h);
+      $("#output").width(w);
+    }
     //console.log("resize");
   };
   doResize();
