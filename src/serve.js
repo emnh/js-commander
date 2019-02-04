@@ -68,7 +68,7 @@ db.loadDatabase(function (err) {
     }
   });
 
-  app.use(bodyParser.urlencoded());
+  app.use(bodyParser.urlencoded({ extended: true }));
 
   app.use(bodyParser.json());
 
