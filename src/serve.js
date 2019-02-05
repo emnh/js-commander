@@ -22,6 +22,8 @@ const homedir = require('os').homedir();
 const sessionSecret = fs.readFileSync(path.join(homedir, 'js-commander.pwd'), 'utf8');
 
 const NedbStore = require('nedb-session-store')(session);
+    
+const dname = path.join('sub', 'src');
 
 db.loadDatabase(function (err) {
   // Removing all documents with the 'match-all' query
@@ -78,6 +80,11 @@ db.loadDatabase(function (err) {
 
   //app.use(express.static('public'));
 
+  app.get('/listfiles', (request, response) => {
+    const files = fs.readDirSync(dname);
+    response.send(JSON.stringify(files));
+  });
+
   app.get('/commands', (request, response) => {
     db.find({ doc: 'cmd' }).sort({ timestamp: 1 }).exec(function (err, docs) {
       response.send(JSON.stringify(docs));
@@ -133,7 +140,6 @@ db.loadDatabase(function (err) {
       timestamp: new Date().getTime()
     };
 
-    const dname = path.join('sub', 'src');
     if (!fs.existsSync(dname)) {
       fs.mkdirSync(dname);
     }
@@ -180,7 +186,7 @@ db.loadDatabase(function (err) {
     });
   });
 
-  app.use('/', proxy('localhost:8082'));
+  app.use('/', proxy('localhost:8081'));
 
   app.listen(port, 'localhost', (err) => {
     if (err) {
