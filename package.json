@@ -23,7 +23,7 @@
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "concurrently 'nodemon src/serve.js' 'webpack-dev-server --hot' 'cd sub && webpack-dev-server --hot'"
+    "start": "concurrently 'nodemon src/serve.js' 'cd sub && npm start'"
   },
   "repository": {
     "type": "git",
