@@ -23,7 +23,7 @@ const sessionSecret = fs.readFileSync(path.join(homedir, 'js-commander.pwd'), 'u
 
 const NedbStore = require('nedb-session-store')(session);
     
-const dname = path.join('sub', 'src');
+const dname = path.join(path.dirname(pwd), 'sub', 'src');
 
 db.loadDatabase(function (err) {
   // Removing all documents with the 'match-all' query
@@ -81,7 +81,7 @@ db.loadDatabase(function (err) {
   //app.use(express.static('public'));
 
   app.get('/listfiles', (request, response) => {
-    const files = fs.readDirSync(dname);
+    const files = fs.readdirSync(dname);
     response.send(JSON.stringify(files));
   });
 
@@ -91,50 +91,105 @@ db.loadDatabase(function (err) {
     });
   });
   
+  app.get('/functions', (request, response) => {
+    db.find({ doc: 'fun' }).sort({ funName: 1 }).exec(function (err, docs) {
+      response.send(JSON.stringify(docs));
+    });
+  });
+  
+  
   app.get('/app', (request, response) => {
+    const fname = request.query.fname;
+    const files = fs.readdirSync(dname);
+    if (files.indexOf(fname) >= 0) {
+      const fpath = path.join(dname, fname);
+      const data = fs.readFileSync(fpath, 'utf8');
+      response.send(data);
+    } else {
+      response.status(500).send("No such file");
+    }
+  });
+
+  app.get('/fun', (request, response) => {
+    const funName = request.query.funName;
     db.find({
-      doc: 'app',
+      doc: 'fun',
+      funName: funName,
       user: request.session.user
     }).sort({ timestamp: 1 })
       .exec(function (err, docs) {
+        if (err) {
+          response.status(500).send("Error: " + err.toString());
+          return;
+        }
         response.send(JSON.stringify(docs));
-      });
+    });
   });
 
   app.get('/username', (request, response) => {
     response.send(request.session.user);
   });
 
-  /* 
-  app.post('/postclick', (request, response) => {
+  app.post('/postfun', (request, response) => {
     const body = request.body;
-    const tag = body.tag;
-    const id = body.cmdid;
-
-    console.log(id, tag);
-
-    const upd = {
-      $inc: {}
-    };
-    upd["$inc"]["tags." + tag] = 1;
-    db.update({ _id: id }, upd, function(err, numReplaced) {
-      //console.log("numReplaced", numReplaced);
-      response.send("OK");
-    });
-  });
-  */
-
-  app.post('/postapp', (request, response) => {
-    const body = request.body;
+    const funName = body.funName;
     const value = body.value;
 
     if (value === undefined || value === '') {
-      response.send("Error: empty message");
+      response.status(500).send("Error: empty message");
+      return;
+    }
+
+    const doc = {
+      doc: 'fun',
+      funName: funName,
+      user: request.session.user,
+      app: value,
+      timestamp: new Date().getTime()
+    };
+
+    db.update(
+      {
+        doc: 'fun',
+        funName: funName,
+        user: request.session.user
+      },
+      doc,
+      {
+        upsert: true,
+        returnUpdatedDocs: true
+      },
+      function(err, numReplaced, newDoc) {
+        if (err) {
+          response.status(500).send("Error: " + err.toString());
+          return;
+        }
+        //console.log(newDoc);
+        response.send(JSON.stringify(newDoc));
+      }
+    );
+  });
+
+  app.post('/postapp', (request, response) => {
+    const body = request.body;
+    const fname = body.fname;
+    
+    const files = fs.readdirSync(dname);
+    if (files.indexOf(fname) < 0) {
+      response.status(500).send("Error: fname");
+      return;
+    }
+
+    const value = body.value;
+
+    if (value === undefined || value === '') {
+      response.status(500).send("Error: empty message");
       return;
     }
 
     const doc = {
       doc: 'app',
+      fname: fname,
       user: request.session.user,
       app: value,
       timestamp: new Date().getTime()
@@ -144,12 +199,13 @@ db.loadDatabase(function (err) {
       fs.mkdirSync(dname);
     }
 
-    const fname = path.join(dname, 'index.js');
-    fs.writeFileSync(fname, value);
+    const fpath = path.join(dname, fname);
+    fs.writeFileSync(fpath, value);
 
     db.update(
       {
         doc: 'app',
+        fname: fname,
         user: request.session.user
       },
       doc,
@@ -158,7 +214,11 @@ db.loadDatabase(function (err) {
         returnUpdatedDocs: true
       },
       function(err, numReplaced, newDoc) {
-        console.log(newDoc);
+        if (err) {
+          response.status(500).send("Error: " + err.toString());
+          return;
+        }
+        //console.log(newDoc);
         response.send(JSON.stringify(newDoc));
       }
     );
@@ -181,7 +241,7 @@ db.loadDatabase(function (err) {
     };
 
     db.insert(doc, function(err, newDoc) {
-      console.log(newDoc);
+      //console.log(newDoc);
       response.send(JSON.stringify(newDoc));
     });
   });
