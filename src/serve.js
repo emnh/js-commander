@@ -132,6 +132,7 @@ db.loadDatabase(function (err) {
 
   app.post('/postfun', (request, response) => {
     const body = request.body;
+    const fname = body.fname;
     const funName = body.funName;
     const value = body.value;
 
@@ -142,6 +143,7 @@ db.loadDatabase(function (err) {
 
     const doc = {
       doc: 'fun',
+      fname: fname,
       funName: funName,
       user: request.session.user,
       app: value,
@@ -151,6 +153,7 @@ db.loadDatabase(function (err) {
     db.update(
       {
         doc: 'fun',
+        fname: fname,
         funName: funName,
         user: request.session.user
       },
